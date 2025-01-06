@@ -14,8 +14,11 @@ import top.lucki.lottery.common.utils.IpUtils;
 import top.lucki.lottery.common.utils.QueryGenerator;
 import top.lucki.lottery.system.entity.People;
 import top.lucki.lottery.system.entity.Process;
+import top.lucki.lottery.system.entity.Roster;
 import top.lucki.lottery.system.service.IPeopleService;
 import top.lucki.lottery.system.service.IProcessService;
+import top.lucki.lottery.system.service.IRosterService;
+import top.lucki.lottery.system.vo.RosterVO;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
@@ -30,6 +33,7 @@ public class PeopleController extends BaseController<People, IPeopleService> {
 
     private final IPeopleService peopleService;
     private final IProcessService processService;
+    private final IRosterService rosterService;
 
     /**
      * 分页列表查询
@@ -49,6 +53,18 @@ public class PeopleController extends BaseController<People, IPeopleService> {
         queryWrapper.lambda().orderByAsc(People::getId);
         Page<People> page = new Page<People>(pageNo, pageSize);
         IPage<People> pageList = peopleService.page(page, queryWrapper);
+        return Result.OK(pageList);
+    }
+
+    @GetMapping(value = "/roster")
+    public Result<?> queryPageList(RosterVO roster,
+                                   @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
+                                   @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize,
+                                   HttpServletRequest req) {
+        QueryWrapper<RosterVO> queryWrapper = QueryGenerator.initQueryWrapper(roster, req.getParameterMap());
+        queryWrapper.lambda().orderByAsc(RosterVO::getId);
+        Page<RosterVO> page = new Page<RosterVO>(pageNo, pageSize);
+        IPage<RosterVO> pageList = rosterService.pageVO(page, queryWrapper);
         return Result.OK(pageList);
     }
 
@@ -74,10 +90,18 @@ public class PeopleController extends BaseController<People, IPeopleService> {
     public Result<?> sign(@RequestBody People people, HttpServletRequest req) {
         if (StrUtil.isEmpty(people.getPeopleName())) return Result.error("姓名不能为空！");
         People query = peopleService.lambdaQuery().eq(People::getPeopleName, people.getPeopleName()).one();
+        Roster roster = rosterService.getByUsername(people.getPeopleName());
+
         if (ObjectUtil.isNotEmpty(query) && ObjectUtil.isNotEmpty(query.getId())) {
             query.setSigninTime(new Date());
             peopleService.updateById(query);
             return Result.OK("您已经签过到了！", query);
+        } else if (ObjectUtil.notEqual(people.getConfirm(), 1) && ObjectUtil.isNull(roster)) {
+            // 判断不存在于名单中
+            people.setConfirm(0);
+            Result<Object> error = Result.error("名单中暂不存在" + people.getPeopleName() + "，请确认是否添加随行人员！");
+            error.setResult(people);
+            return error;
         } else {
             people.setSigninTime(new Date()).setCreateIp(IpUtils.getIpAddr(req)).setCreateTime(new Date());
             peopleService.save(people);

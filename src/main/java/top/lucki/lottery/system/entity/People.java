@@ -1,6 +1,7 @@
 package top.lucki.lottery.system.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -40,4 +41,11 @@ public class People extends BaseEntity {
     private String wechatInfo;
     private String otherInfo;
     private String remark;
+
+    /**
+     * confirm = 1 已确认
+     * confirm = 0 待确认是否添加人员
+     */
+    @TableField(exist = false)
+    private Integer confirm;
 }
