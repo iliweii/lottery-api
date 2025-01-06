@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="top.lucki.lottery.system.mapper.RosterMapper">
+
+    <select id="selectPageVO" resultType="top.lucki.lottery.system.vo.RosterVO">
+        SELECT *
+        FROM (SELECT r.id, r.username, IF(p.id IS NULL, 0, 1) AS `status`
+              FROM t_roster r
+                       LEFT JOIN t_people p ON p.people_name = r.username
+              UNION
+              SELECT p.id + 100, p.people_name AS username, 2 AS `status`
+              FROM t_roster r
+                       RIGHT JOIN t_people p ON p.people_name = r.username
+              WHERE r.username IS NULL) t ${ew.customSqlSegment}
+    </select>
+
+</mapper>
