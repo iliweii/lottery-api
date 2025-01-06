@@ -25,7 +25,7 @@ import java.util.UUID;
 @RequestMapping("/common")
 public class CommonController {
 
-    private final String uploadpath = "/www/wwwdata";
+    private final String uploadpath = "/home/liwei/app/lottery/";
 
     /**
      * 文件上传统一方法
@@ -93,7 +93,7 @@ public class CommonController {
                 dbpath = dbpath.replace("\\", "/");
             }
 
-            return dbpath   ;
+            return dbpath;
         } catch (IOException e) {
             log.error(e.getMessage(), e);
         }
