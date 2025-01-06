@@ -19,6 +19,7 @@ import top.lucki.lottery.system.entity.People;
 import top.lucki.lottery.system.entity.Process;
 import top.lucki.lottery.system.service.IPeopleService;
 import top.lucki.lottery.system.service.IProcessService;
+import top.lucki.lottery.system.service.LotteryService;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
@@ -33,6 +34,7 @@ public class ProcessController extends BaseController<Process, IProcessService> 
 
     private final IProcessService processService;
     private final IPeopleService peopleService;
+    private final LotteryService lotteryService;
 
     /**
      * 分页列表查询
@@ -62,6 +64,11 @@ public class ProcessController extends BaseController<Process, IProcessService> 
      */
     @GetMapping(value = "/draw")
     public Result<?> draw() {
+        // 判断抽奖间隔
+        if (lotteryService.isCountdownActive()) {
+            return Result.error("上一个抽奖仍在进行中，请稍等！");
+        }
+
         List<People> peopleList = peopleService.list();
         List<Process> processList = processService.list();
         List<Integer> winnerIdList = processList.stream().map(Process::getPeopleId).collect(Collectors.toList());
@@ -71,6 +78,7 @@ public class ProcessController extends BaseController<Process, IProcessService> 
         if (total == 0) return Result.error("请至少有一个参与人！");
         else if (total - winnerNum <= 0) return Result.error("已全部抽奖完毕！");
         int drawTime = RandomUtil.randomInt(0, 50) + 1; // 抽奖次数
+        if (total - winnerNum == 1) drawTime = 1;
         People theWinner = new People();
         // 随机抽取随机个次数，最后一个随机抽取的为本次获奖者
         for (int i = 0; i < drawTime; i++) {
@@ -83,6 +91,9 @@ public class ProcessController extends BaseController<Process, IProcessService> 
                 .setProcessTotal(total - winnerNum)
                 .setProcessRemark(theWinner.getPeopleName());
         processService.save(process);
+
+        // 开始倒计时
+        lotteryService.startCountdown();
 
         // 发送邮件
         if (StrUtil.isNotEmpty(theWinner.getEmail()) && Validator.isEmail(theWinner.getEmail())) {
