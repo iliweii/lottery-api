@@ -20,6 +20,8 @@ import top.lucki.lottery.system.entity.Process;
 import top.lucki.lottery.system.service.IPeopleService;
 import top.lucki.lottery.system.service.IProcessService;
 import top.lucki.lottery.system.service.LotteryService;
+import top.lucki.lottery.ws.WebSocketServer;
+import top.lucki.lottery.ws.WsMessage;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
@@ -35,6 +37,7 @@ public class ProcessController extends BaseController<Process, IProcessService> 
     private final IProcessService processService;
     private final IPeopleService peopleService;
     private final LotteryService lotteryService;
+    private final WebSocketServer webSocketServer;
 
     /**
      * 分页列表查询
@@ -54,6 +57,15 @@ public class ProcessController extends BaseController<Process, IProcessService> 
         queryWrapper.lambda().orderByAsc(Process::getId);
         Page<Process> page = new Page<Process>(pageNo, pageSize);
         IPage<Process> pageList = processService.page(page, queryWrapper);
+
+        // 如果正在抽奖过程中，则移除列表查询中的中奖者
+        if (lotteryService.isCountdownActive() && !pageList.getRecords().isEmpty()) {
+            List<Process> processList1 = pageList.getRecords();
+            // 移除最后一个
+            processList1.remove(processList1.size() - 1);
+            pageList.setRecords(processList1);
+        }
+
         return Result.OK(pageList);
     }
 
@@ -93,7 +105,7 @@ public class ProcessController extends BaseController<Process, IProcessService> 
         processService.save(process);
 
         // 开始倒计时
-        lotteryService.startCountdown();
+        lotteryService.startCountdown(process);
 
         // 发送邮件
         if (StrUtil.isNotEmpty(theWinner.getEmail()) && Validator.isEmail(theWinner.getEmail())) {
@@ -174,6 +186,9 @@ public class ProcessController extends BaseController<Process, IProcessService> 
         List<Process> processList = processService.list();
         List<Integer> winnerIdList = processList.stream().map(Process::getId).collect(Collectors.toList());
         this.processService.removeByIds(winnerIdList);
+
+        webSocketServer.sendMessage(new WsMessage("重置抽奖", "重置抽奖"));
+
         return Result.OK("批量删除成功！");
     }
 
