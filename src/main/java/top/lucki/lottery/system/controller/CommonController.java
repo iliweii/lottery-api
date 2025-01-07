@@ -25,7 +25,7 @@ import java.util.UUID;
 @RequestMapping("/common")
 public class CommonController {
 
-    private final String uploadpath = "/home/liwei/app/lottery/";
+    private final String uploadpath = "/app/lottery_applet/upload/";
 
     /**
      * 文件上传统一方法
