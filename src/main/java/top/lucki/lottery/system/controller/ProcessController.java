@@ -25,6 +25,7 @@ import top.lucki.lottery.ws.WsMessage;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -92,15 +93,18 @@ public class ProcessController extends BaseController<Process, IProcessService> 
         int drawTime = RandomUtil.randomInt(0, 50) + 1; // 抽奖次数
         if (total - winnerNum == 1) drawTime = 1;
         People theWinner = new People();
+        List<String> winners = new LinkedList<>();
         // 随机抽取随机个次数，最后一个随机抽取的为本次获奖者
         for (int i = 0; i < drawTime; i++) {
             theWinner = RandomUtil.randomEle(participantList);
+            winners.add(theWinner.getPeopleName());
         }
         Process process = new Process();
         process.setPeopleId(theWinner.getId())
                 .setCreateTime(new Date())
                 .setProcessTime(drawTime)
                 .setProcessTotal(total - winnerNum)
+                .setProcessInfo(String.join(",", winners))
                 .setProcessRemark(theWinner.getPeopleName());
         processService.save(process);
 
