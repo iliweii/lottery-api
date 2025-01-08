@@ -91,7 +91,11 @@ public class ProcessController extends BaseController<Process, IProcessService> 
         if (total == 0) return Result.error("请至少有一个参与人！");
         else if (total - winnerNum <= 0) return Result.error("已全部抽奖完毕！");
         int drawTime = RandomUtil.randomInt(0, 50) + 1; // 抽奖次数
-        if (total - winnerNum == 1) drawTime = 1;
+        int countdown = 5; // 倒计时次数
+        if (total - winnerNum == 1) {
+            drawTime = 1;
+            countdown = 1;
+        }
         People theWinner = new People();
         List<String> winners = new LinkedList<>();
         // 随机抽取随机个次数，最后一个随机抽取的为本次获奖者
@@ -109,7 +113,7 @@ public class ProcessController extends BaseController<Process, IProcessService> 
         processService.save(process);
 
         // 开始倒计时
-        lotteryService.startCountdown(process);
+        lotteryService.startCountdown(process, countdown);
 
         // 发送邮件
         if (StrUtil.isNotEmpty(theWinner.getEmail()) && Validator.isEmail(theWinner.getEmail())) {

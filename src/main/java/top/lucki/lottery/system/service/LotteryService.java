@@ -28,9 +28,9 @@ public class LotteryService {
         return isCountdownActive.get();
     }
 
-    public void startCountdown(Process currentLottery) {
+    public void startCountdown(Process currentLottery, Integer countdown) {
         if (isCountdownActive.compareAndSet(false, true)) {  // 确保只在倒计时未开始时启动
-            final int countdownTime = 5;  // 倒计时时间（秒）
+            final int countdownTime = countdown;  // 倒计时时间（秒）
             int[] remainingTime = {countdownTime};  // 使用数组包装为可变类型，方便内部修改
             countdownStartTime = System.currentTimeMillis();  // 记录倒计时开始的时间
 
