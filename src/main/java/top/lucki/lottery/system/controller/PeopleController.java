@@ -116,7 +116,7 @@ public class PeopleController extends BaseController<People, IPeopleService> {
         } else if (ObjectUtil.notEqual(people.getConfirm(), 1) && ObjectUtil.isNull(roster)) {
             // 判断不存在于名单中
             people.setConfirm(0);
-            Result<Object> error = Result.error("名单中暂不存在" + people.getPeopleName() + "，请确认是否添加随行人员！");
+            Result<Object> error = Result.error("名单中暂不存在" + people.getPeopleName() + "，请确认是否签到！");
             error.setResult(people);
             return error;
         } else {
